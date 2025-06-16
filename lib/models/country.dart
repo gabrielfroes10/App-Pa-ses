@@ -19,7 +19,6 @@ class Country {
 
   factory Country.fromJson(Map<String, dynamic> json) {
     String currency = 'Desconhecida';
-
     if (json['currencies'] != null && json['currencies'] is Map) {
       final currencies = json['currencies'] as Map<String, dynamic>;
       if (currencies.isNotEmpty) {
@@ -27,11 +26,11 @@ class Country {
         currency = currencies[firstKey]['name'] ?? 'Desconhecida';
       }
     }
-
     return Country(
       name: json['name']['common'] ?? 'Sem nome',
       flagUrl: json['flags']['png'] ?? '',
-      capital: (json['capital'] != null && json['capital'].isNotEmpty)
+      // CORREÇÃO: Adicionado "(as List)" para garantir que o tipo está correto
+      capital: (json['capital'] != null && (json['capital'] as List).isNotEmpty)
           ? json['capital'][0]
           : 'Sem capital',
       region: json['region'] ?? 'Sem região',

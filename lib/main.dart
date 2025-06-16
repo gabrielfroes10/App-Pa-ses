@@ -12,6 +12,7 @@ class CountryApp extends StatelessWidget {
       title: 'Países do Mundo',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: CountryListPage(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }

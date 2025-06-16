@@ -7,18 +7,21 @@ void showCountryDetailsDialog(BuildContext context, Country country) {
     builder: (context) {
       return AlertDialog(
         title: Text(country.name),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(child: Image.network(country.flagUrl, width: 100)),
-            SizedBox(height: 10),
-            Text('Capital: ${country.capital}'),
-            Text('Região: ${country.region}'),
-            Text('Sub-região: ${country.subregion}'),
-            Text('População: ${country.population}'),
-            Text('Moeda: ${country.currency}'),
-          ],
+        // MELHORIA: Adicionado para evitar que o conteúdo quebre em telas pequenas
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(child: Image.network(country.flagUrl, width: 100)),
+              SizedBox(height: 10),
+              Text('Capital: ${country.capital}'),
+              Text('Região: ${country.region}'),
+              Text('Sub-região: ${country.subregion}'),
+              Text('População: ${country.population}'),
+              Text('Moeda: ${country.currency}'),
+            ],
+          ),
         ),
         actions: [
           TextButton(

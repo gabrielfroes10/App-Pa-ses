@@ -1,10 +1,16 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../models/country.dart';
+import '../services/country_service.dart';
 import '../widgets/country_details_dialog.dart';
 
 class CountryListPage extends StatefulWidget {
+  final CountryService countryService;
+
+  CountryListPage({Key? key, CountryService? service})
+      : countryService = service ?? CountryService(http.Client()),
+        super(key: key);
+
   @override
   _CountryListPageState createState() => _CountryListPageState();
 }
@@ -15,28 +21,32 @@ class _CountryListPageState extends State<CountryListPage> {
   int currentIndex = 0;
   final int itemsPerPage = 10;
   bool isLoading = false;
+  bool initialLoading = true;
 
   @override
   void initState() {
     super.initState();
-    fetchCountries();
+    _fetchInitialCountries();
   }
 
-  Future<void> fetchCountries() async {
-    setState(() => isLoading = true);
-    final response = await http.get(Uri.parse('https://restcountries.com/v3.1/all'));
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      allCountries = data.map((item) => Country.fromJson(item)).toList();
-      allCountries.sort((a, b) => a.name.compareTo(b.name));
+  Future<void> _fetchInitialCountries() async {
+    setState(() => initialLoading = true);
+    try {
+      allCountries = await widget.countryService.fetchCountries();
       loadMoreCountries();
-    } else {
-      throw Exception('Erro ao carregar países');
+    } catch (e) {
+      print(e);
+    } finally {
+      if(mounted) {
+        setState(() => initialLoading = false);
+      }
     }
   }
 
   void loadMoreCountries() {
+    if (isLoading) return;
+    setState(() => isLoading = true);
+
     final nextIndex = currentIndex + itemsPerPage;
     if (currentIndex < allCountries.length) {
       final newItems = allCountries.sublist(
@@ -46,13 +56,15 @@ class _CountryListPageState extends State<CountryListPage> {
       setState(() {
         displayedCountries.addAll(newItems);
         currentIndex = nextIndex;
-        isLoading = false;
       });
     }
+    setState(() => isLoading = false);
   }
 
   bool _onScrollNotification(ScrollNotification notification) {
-    if (notification.metrics.pixels >= notification.metrics.maxScrollExtent - 200 && !isLoading) {
+    if (notification.metrics.pixels >=
+            notification.metrics.maxScrollExtent - 200 &&
+        !isLoading) {
       loadMoreCountries();
     }
     return false;
@@ -68,14 +80,14 @@ class _CountryListPageState extends State<CountryListPage> {
         title: Text(
           'Lista de países',
           style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w600,
-          fontSize: 20,
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
+          ),
         ),
+        automaticallyImplyLeading: false,
       ),
-      automaticallyImplyLeading: false, // remove o botão de voltar ou menu
-    ),
-      body: isLoading && displayedCountries.isEmpty
+      body: initialLoading
           ? Center(child: CircularProgressIndicator())
           : NotificationListener<ScrollNotification>(
               onNotification: _onScrollNotification,
@@ -88,11 +100,13 @@ class _CountryListPageState extends State<CountryListPage> {
 
                   final country = displayedCountries[index];
                   return ListTile(
+                    key: Key('country_list_tile_${country.name}'),
                     leading: Image.network(
                       country.flagUrl,
                       width: 50,
                       height: 30,
                       fit: BoxFit.cover,
+                      key: Key('flag_image_${country.name}'),
                     ),
                     title: Text(country.name),
                     onTap: () => showCountryDetailsDialog(context, country),
